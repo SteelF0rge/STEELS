@@ -1,79 +1,92 @@
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <chrono>
 #include <thread>
+#include <chrono>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
 class Process {
 public:
- int pid;
- int burst_time; // execution time
- int priority; // priority level (higher is better)
+	int pid;
+	int burst_time; // execution time
+	int priority;
 
- Process(int pid, int burst_time, int priority) {
-  this->pid = pid;
-  this->burst_time = burst_time;
-  this->priority = priority;
- }
+	Process(int pid, int burst_time, int priority) {
+		this->pid = pid;
+		this->burst_time = burst_time;
+		this->priority = priority;
+	}
 };
 
 class MLFQ {
-private:
- vector<queue<Process>> queues; // multiple queues for different priority levels
- int current_queue; // current queue index
-
 public:
- MLFQ(int num_queues) {
-  queues.resize(num_queues);
-  current_queue = 0;
- }
+	void schedule(vector<Process> processes) {
+		int current_time = 0;
+		int completed_processes = 0;
 
- void schedule(Process process) {
-  // assign process to the appropriate queue based on its priority
-  int queue_index = get_queue_index(process.priority);
-  queues[queue_index].push(process);
- }
+		while (completed_processes < processes.size()) {
+			for (auto& process : processes) {
+				if (process.burst_time > 0) {
+					// Execute the process for the time quantum
+					this_thread::sleep_for(chrono::seconds(2));
+					process.burst_time -= 2;
+					current_time += 2;
 
- void run() {
-  while (true) {
-   // execute processes from the current queue
-   while (!queues[current_queue].empty()) {
-    Process process = queues[current_queue].front();
-    queues[current_queue].pop();
-    // execute the process for the remaining burst time
-    std::this_thread::sleep_for(std::chrono::seconds(process.burst_time));
-   }
-   // move to the next queue
-   current_queue = (current_queue + 1) % queues.size();
-  }
- }
+					// Check if the process is completed
+					if (process.burst_time <= 0) {
+						completed_processes++;
+					}
+				}
+			}
+		}
 
- int get_queue_index(int priority) {
-  // map priority to queue index (e.g., 0-3 for 4 queues)
-  return priority % queues.size();
- }
+		cout << "Total execution time: " << current_time << " seconds" << endl;
+	}
+
+	float get_cpu_utilization() {
+		ifstream file("/proc/loadavg");
+		string line;
+		getline(file, line);
+		istringstream ss(line);
+		float cpu_utilization;
+		ss >> cpu_utilization;
+		return cpu_utilization;
+	}
+
+	float get_memory_usage() {
+		ifstream file("/proc/meminfo");
+		string line;
+		getline(file, line);
+		istringstream ss(line);
+		float memory_total, memory_free, memory_available;
+		ss >> memory_total >> memory_free >> memory_available;
+		return (memory_total - memory_available) / memory_total;
+	}
 };
 
 int main() {
- // create an MLFQ scheduler with 4 queues
- MLFQ scheduler(4);
+	// Define the processes
+	vector<Process> processes = {
+		Process(1, 10, 2),
+		Process(2, 5, 1),
+		Process(3, 8, 3),
+		Process(4, 3, 2)
+	};
 
- // define some processes
- Process p1(1, 10, 3);
- Process p2(2, 5, 2);
- Process p3(3, 8, 1);
- Process p4(4, 3, 4);
+	// Create an MLFQ object
+	MLFQ mlfq;
 
- // schedule the processes
- scheduler.schedule(p1);
- scheduler.schedule(p2);
- scheduler.schedule(p3);
- scheduler.schedule(p4);
+	// Implement MLFQ scheduling
+	mlfq.schedule(processes);
 
- // run the scheduler
- scheduler.run();
+	// Get CPU utilization and memory usage
+	float cpu_utilization = mlfq.get_cpu_utilization();
+	float memory_usage = mlfq.get_memory_usage();
 
- return 0;
+	cout << "CPU utilization: " << cpu_utilization * 100 << "%" << endl;
+	cout << "Memory usage: " << memory_usage * 100 << "%" << endl;
+
+	return 0;
 }
