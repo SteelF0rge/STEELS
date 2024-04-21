@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+#include <sys/sysinfo.h>
+#include <unistd.h>
+#include <algorithm>
+
+using namespace std;
+
+class Process {
+public:
+ int pid;
+ int burst_time; // execution time
+ int priority; // priority level (higher is better)
+
+ Process(int pid, int burst_time, int priority) {
+  this->pid = pid;
+  this->burst_time = burst_time;
+  this->priority = priority;
+ }
+};
+
+class PriorityScheduler {
+public:
+ void schedule(vector<Process> processes) {
+  int current_time = 0;
+  int completed_processes = 0;
+
+  // Sort processes by priority (higher priority first)
+  sort(processes.begin(), processes.end(), [](const Process& a, const Process& b) {
+   return a.priority > b.priority;
+  });
+
+  while (completed_processes < processes.size()) {
+   for (auto& process : processes) {
+    if (process.burst_time > 0) {
+     // Execute the process for the remaining burst time
+     this_thread::sleep_for(chrono::seconds(process.burst_time));
+     current_time += process.burst_time;
+     process.burst_time = 0;
+     completed_processes++;
+    }
+   }
+  }
+
+  cout << "Total execution time: " << current_time << " seconds" << endl;
+ }
+
+ float get_cpu_utilization() {
+  FILE *fp;
+  float cpu_utilization;
+  char buffer[1024];
+
+  fp = fopen("/proc/loadavg", "r");
+  fscanf(fp, "%f", &cpu_utilization);
+  fclose(fp);
+
+  return cpu_utilization;
+ }
+
+ float get_memory_usage() {
+  FILE *fp;
+  float memory_usage;
+  char buffer[1024];
+
+  fp = fopen("/proc/meminfo", "r");
+  fgets(buffer, 1024, fp);
+  sscanf(buffer, "MemTotal: %*d kB\nMemFree: %*d kB\nMemAvailable: %f kB\n", &memory_usage);
+  fclose(fp);
+
+  return memory_usage / 1024; // Convert to GB
+ }
+};
+
+int main() {
+ // Define the processes
+ vector<Process> processes = {
+  Process(1, 10, 3),
+  Process(2, 5, 2),
+  Process(3, 8, 1),
+  Process(4, 3, 4)
+ };
+
+ // Create a PriorityScheduler object
+ PriorityScheduler scheduler;
+
+ // Implement priority scheduling
+ scheduler.schedule(processes);
+
+ // Get CPU utilization and memory usage
+ float cpu_utilization = scheduler.get_cpu_utilization();
+ float memory_usage = scheduler.get_memory_usage();
+
+ cout << "CPU utilization: " << cpu_utilization * 100 << "%" << endl;
+ cout << "Memory usage: " << memory_usage * 100 << "%" << endl;
+
+ return 0;
+}
