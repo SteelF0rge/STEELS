@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <chrono>
+#include <thread>
+
+using namespace std;
+
+class Process {
+public:
+ int pid;
+ int burst_time; // execution time
+ int priority; // priority level (higher is better)
+
+ Process(int pid, int burst_time, int priority) {
+  this->pid = pid;
+  this->burst_time = burst_time;
+  this->priority = priority;
+ }
+};
+
+class MLFQ {
+private:
+ vector<queue<Process>> queues; // multiple queues for different priority levels
+ int current_queue; // current queue index
+
+public:
+ MLFQ(int num_queues) {
+  queues.resize(num_queues);
+  current_queue = 0;
+ }
+
+ void schedule(Process process) {
+  // assign process to the appropriate queue based on its priority
+  int queue_index = get_queue_index(process.priority);
+  queues[queue_index].push(process);
+ }
+
+ void run() {
+  while (true) {
+   // execute processes from the current queue
+   while (!queues[current_queue].empty()) {
+    Process process = queues[current_queue].front();
+    queues[current_queue].pop();
+    // execute the process for the remaining burst time
+    std::this_thread::sleep_for(std::chrono::seconds(process.burst_time));
+   }
+   // move to the next queue
+   current_queue = (current_queue + 1) % queues.size();
+  }
+ }
+
+ int get_queue_index(int priority) {
+  // map priority to queue index (e.g., 0-3 for 4 queues)
+  return priority % queues.size();
+ }
+};
+
+int main() {
+ // create an MLFQ scheduler with 4 queues
+ MLFQ scheduler(4);
+
+ // define some processes
+ Process p1(1, 10, 3);
+ Process p2(2, 5, 2);
+ Process p3(3, 8, 1);
+ Process p4(4, 3, 4);
+
+ // schedule the processes
+ scheduler.schedule(p1);
+ scheduler.schedule(p2);
+ scheduler.schedule(p3);
+ scheduler.schedule(p4);
+
+ // run the scheduler
+ scheduler.run();
+
+ return 0;
+}
