@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <mach/mach.h>
+
+using namespace std;
+
+class Process {
+public:
+ int pid;
+ int burst_time; // execution time
+ int priority;
+
+ Process(int pid, int burst_time, int priority) {
+  this->pid = pid;
+  this->burst_time = burst_time;
+  this->priority = priority;
+ }
+};
+
+class RoundRobin {
+public:
+ void schedule(vector<Process> processes) {
+  int current_time = 0;
+  int completed_processes = 0;
+
+  while (completed_processes < processes.size()) {
+   for (auto& process : processes) {
+    if (process.burst_time > 0) {
+     // Execute the process for the time quantum
+     this_thread::sleep_for(chrono::seconds(2));
+     process.burst_time -= 2;
+     current_time += 2;
+
+     // Check if the process is completed
+     if (process.burst_time <= 0) {
+      completed_processes++;
+     }
+    }
+   }
+  }
+
+  cout << "Total execution time: " << current_time << " seconds" << endl;
+ }
+
+ float get_cpu_utilization() {
+  int cpu_utilization;
+  sysctlbyname("hw.activecpu", &cpu_utilization, sizeof(cpu_utilization), NULL, 0);
+  return (float)cpu_utilization / (float)sysconf(_SC_NPROCESSORS_ONLN);
+ }
+
+ float get_memory_usage() {
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+  vm_statistics_data_t vm_stat;
+  host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vm_stat, &count);
+  return (float)vm_stat.active_count / (float)vm_stat.max_count;
+ }
+};
+
+int main() {
+ // Define the processes
+ vector<Process> processes = {
+  Process(1, 10, 2),
+  Process(2, 5, 1),
+  Process(3, 8, 3),
+  Process(4, 3, 2)
+ };
+
+ // Create a RoundRobin object
+ RoundRobin rr;
+
+ // Implement Round Robin scheduling
+ rr.schedule(processes);
+
+ // Get CPU utilization and memory usage
+ float cpu_utilization = rr.get_cpu_utilization();
+ float memory_usage = rr.get_memory_usage();
+
+ cout << "CPU utilization: " << cpu_utilization * 100 << "%" << endl;
+ cout << "Memory usage: " << memory_usage * 100 << "%" << endl;
+
+ return 0;
+}
