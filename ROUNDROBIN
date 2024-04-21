@@ -2,9 +2,8 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-#include <sys/sysctl.h>
-#include <sys/types.h>
-#include <mach/mach.h>
+#include <sys/sysinfo.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -47,16 +46,28 @@ public:
  }
 
  float get_cpu_utilization() {
-  int cpu_utilization;
-  sysctlbyname("hw.activecpu", &cpu_utilization, sizeof(cpu_utilization), NULL, 0);
-  return (float)cpu_utilization / (float)sysconf(_SC_NPROCESSORS_ONLN);
+  FILE *fp;
+  float cpu_utilization;
+  char buffer[1024];
+
+  fp = fopen("/proc/loadavg", "r");
+  fscanf(fp, "%f", &cpu_utilization);
+  fclose(fp);
+
+  return cpu_utilization;
  }
 
  float get_memory_usage() {
-  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-  vm_statistics_data_t vm_stat;
-  host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vm_stat, &count);
-  return (float)vm_stat.active_count / (float)vm_stat.max_count;
+  FILE *fp;
+  float memory_usage;
+  char buffer[1024];
+
+  fp = fopen("/proc/meminfo", "r");
+  fgets(buffer, 1024, fp);
+  sscanf(buffer, "MemTotal: %*d kB\nMemFree: %*d kB\nMemAvailable: %f kB\n", &memory_usage);
+  fclose(fp);
+
+  return memory_usage / 1024; // Convert to GB
  }
 };
 
