@@ -1,6 +1,7 @@
 import Foundation
 
 // Function to merge two sorted arrays
+// we're using threads in this code, bcz doing it only with proceses would be ineffecient hamme new processes bannane prengay and will have to show IPC
 func merge(_ left: [Int], _ right: [Int]) -> [Int] {
     var result = [Int]()
     var leftIndex = 0
