@@ -1,0 +1,56 @@
+//using process everything is happening in one process
+import Foundation
+
+func quickSortUsingProcesses(_ array: [Int]) -> [Int] {
+    if array.count <= 1 {
+        return array
+    }
+
+    let pivot = array.first!
+    let left = array.suffix(from: 1).filter { $0 <= pivot }
+    let right = array.suffix(from: 1).filter { $0 > pivot }
+
+    let leftSorted = quickSortUsingProcesses(left)
+    let rightSorted = quickSortUsingProcesses(right)
+
+    return [pivot] + leftSorted + rightSorted
+}
+
+// Example usage
+let array = [6, 5, 4, 3, 2, 1]
+print("Quick sort using processes:", quickSortUsingProcesses(array))
+
+// using threadsss
+import Foundation
+
+func quickSortUsingThreads(_ array: [Int]) -> [Int] {
+    if array.count <= 1 {
+        return array
+    }
+
+    let pivot = array.first!
+    let left = array.suffix(from: 1).filter { $0 < pivot }
+    let middle = array.suffix(from: 1).filter { $0 == pivot }
+    let right = array.suffix(from: 1).filter { $0 > pivot }
+
+    var leftSorted: [Int] = []
+    var rightSorted: [Int] = []
+
+    let queue = DispatchQueue(label: "quickSortQueue")
+
+    queue.async {
+        leftSorted = quickSortUsingThreads(left)
+    }
+
+    queue.async {
+        rightSorted = quickSortUsingThreads(right)
+    }
+
+    queue.sync {}
+
+    return leftSorted + middle + [pivot] + rightSorted
+}
+
+// Example usage
+let array = [6, 5, 4, 3, 2, 1]
+print("Quick sort using threads:", quickSortUsingThreads(array))
