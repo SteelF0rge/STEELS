@@ -1,0 +1,25 @@
+import Foundation
+
+extension Thread {
+    func join() {
+        let semaphore = DispatchSemaphore(value: 0)
+        let thread = Thread {
+            // Perform some work
+            for i in 1...5 {
+                print("Thread: \(i)")
+                Thread.sleep(forTimeInterval: 1) // Simulate some work
+            }
+            semaphore.signal()
+        }
+        thread.start()
+        semaphore.wait()
+    }
+}
+
+// Create a thread
+let thread = Thread()
+
+// Start the thread and wait for it to finish
+thread.join()
+
+print("Program finished")
