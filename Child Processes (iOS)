@@ -17,7 +17,7 @@ func main() {
         } else if childPid == 0 { // Child process
             print("Child process: PID=\(getpid())")
         } else { // Parent process
-            print("Parent process: PID=\(pid), Child PID=\(childPid) - Child #\(i)")
+            print("Parent process: PID=\(pid), Child PID=\(childPid) - Umer's Child Process #\(i)")
         }
     }
 }
