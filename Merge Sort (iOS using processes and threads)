@@ -1,0 +1,43 @@
+import Foundation
+
+// Function to merge two sorted arrays
+func merge(_ left: [Int], _ right: [Int]) -> [Int] {
+    var result = [Int]()
+    var leftIndex = 0
+    var rightIndex = 0
+
+    while leftIndex < left.count && rightIndex < right.count {
+        if left[leftIndex] < right[rightIndex] {
+            result.append(left[leftIndex])
+            leftIndex += 1
+        } else {
+            result.append(right[rightIndex])
+            rightIndex += 1
+        }
+    }
+
+    result += left.suffix(from: leftIndex)
+    result += right.suffix(from: rightIndex)
+
+    return result
+}
+
+// Function to perform merge sort using threads
+func mergeSortUsingThreads(_ array: [Int]) -> [Int] {
+    if array.count <= 1 {
+        return array
+    }
+
+    let mid = array.count / 2
+    let left = Array(array[0..<mid])
+    let right = Array(array[mid..<array.count])
+
+    let leftResult = mergeSortUsingThreads(left)
+    let rightResult = mergeSortUsingThreads(right)
+
+    return merge(leftResult, rightResult)
+}
+
+// Example usage
+let array = [6, 5, 4, 3, 2, 1]
+print("Merge sort using threads:", mergeSortUsingThreads(array))
