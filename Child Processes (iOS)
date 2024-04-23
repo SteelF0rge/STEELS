@@ -1,0 +1,25 @@
+import Foundation
+
+func main() {
+    let pid = ProcessInfo.processInfo.processIdentifier
+
+    // Create multiple child processes
+    for i in 1...5 {
+        var childPid: pid_t = 0
+        let argv = ["echo", "Hello, World! \(i)"]
+        let envp: [String] = []
+
+        let status = posix_spawn(&childPid, "/usr/bin/echo", nil, nil, argv.map { $0.withCString { strdup($0) } }, envp.map { $0.withCString { strdup($0) } })
+
+        if status == -1 {
+            print("Error creating child process")
+            exit(EXIT_FAILURE)
+        } else if childPid == 0 { // Child process
+            print("Child process: PID=\(getpid())")
+        } else { // Parent process
+            print("Parent process: PID=\(pid), Child PID=\(childPid) - Child #\(i)")
+        }
+    }
+}
+
+main()
