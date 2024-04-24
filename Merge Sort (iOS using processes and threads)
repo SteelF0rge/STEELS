@@ -1,7 +1,6 @@
 import Foundation
 
 // Function to merge two sorted arrays
-// we're using threads in this code, bcz doing it only with proceses would be ineffecient hamme new processes bannane prengay and will have to show IPC
 func merge(_ left: [Int], _ right: [Int]) -> [Int] {
     var result = [Int]()
     var leftIndex = 0
@@ -33,8 +32,21 @@ func mergeSortUsingThreads(_ array: [Int]) -> [Int] {
     let left = Array(array[0..<mid])
     let right = Array(array[mid..<array.count])
 
-    let leftResult = mergeSortUsingThreads(left)
-    let rightResult = mergeSortUsingThreads(right)
+    var leftResult: [Int] = []
+    var rightResult: [Int] = []
+
+    let leftThread = Thread {
+        leftResult = mergeSortUsingThreads(left)
+    }
+    let rightThread = Thread {
+        rightResult = mergeSortUsingThreads(right)
+    }
+
+    leftThread.start()
+    rightThread.start()
+
+    leftThread.join()
+    rightThread.join()
 
     return merge(leftResult, rightResult)
 }
