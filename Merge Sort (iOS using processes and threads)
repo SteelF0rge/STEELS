@@ -22,6 +22,21 @@ func merge(_ left: [Int], _ right: [Int]) -> [Int] {
     return result
 }
 
+// Thread subclass to perform merge sort
+class MergeSortThread: Thread {
+    var array: [Int]
+    var result: [Int]
+
+    init(array: [Int]) {
+        self.array = array
+        self.result = []
+    }
+
+    override func main() {
+        result = mergeSortUsingThreads(array)
+    }
+}
+
 // Function to perform merge sort using threads
 func mergeSortUsingThreads(_ array: [Int]) -> [Int] {
     if array.count <= 1 {
@@ -32,15 +47,8 @@ func mergeSortUsingThreads(_ array: [Int]) -> [Int] {
     let left = Array(array[0..<mid])
     let right = Array(array[mid..<array.count])
 
-    var leftResult: [Int] = []
-    var rightResult: [Int] = []
-
-    let leftThread = Thread {
-        leftResult = mergeSortUsingThreads(left)
-    }
-    let rightThread = Thread {
-        rightResult = mergeSortUsingThreads(right)
-    }
+    let leftThread = MergeSortThread(array: left)
+    let rightThread = MergeSortThread(array: right)
 
     leftThread.start()
     rightThread.start()
@@ -48,7 +56,7 @@ func mergeSortUsingThreads(_ array: [Int]) -> [Int] {
     leftThread.join()
     rightThread.join()
 
-    return merge(leftResult, rightResult)
+    return merge(leftThread.result, rightThread.result)
 }
 
 // Example usage
